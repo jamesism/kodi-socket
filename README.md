@@ -28,8 +28,14 @@ kodi.api.VideoLibrary.GetMovies().then( movies => { ... } );
 
 // or
 let movies = await kodi.api.VideoLibrary.GetMovies();
+
+// or arbitrary commands
+kodi.execute('Input.Back');
 ```
 
+## Documentation
+
+https://jamesism.github.io/kodi-socket/
 
 ## License
 
