@@ -1,18 +1,22 @@
 {
   "name": "kodi-socket",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A classful representation of a Kodi websocket connection. Supports browsers that support WebSocket. Will add node support soon.",
   "main": "index.js",
   "scripts": {
     "doc": "esdoc -c ./esdoc.json",
     "lint": "eslint src",
     "build": "npm run lint && babel src --source-root src -s inline -d . --presets 'stage-0'",
-    "publish": "npm run build && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm publish"
+    "release": "npm run build && git commit -am $npm_package_version && git tag $npm_package_version && git push && git push --tags && npm publish"
   },
   "keywords": [
     "kodi",
     "xbmc"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jamesism/kodi-socket.git"
+  },
   "author": "James Simpson",
   "license": "MIT",
   "devDependencies": {
