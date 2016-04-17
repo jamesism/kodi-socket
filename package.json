@@ -1,6 +1,6 @@
 {
   "name": "kodi-socket",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A classful representation of a Kodi websocket connection. Supports browsers that support WebSocket. Will add node support soon.",
   "main": "index.js",
   "scripts": {
