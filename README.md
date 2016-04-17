@@ -2,7 +2,9 @@
 
 [![NPM](https://img.shields.io/npm/v/kodi-socket.svg)](http://npm.im/kodi-socket)
 
-Kodi/XBMC class exposes JSON-RPC API and notifications
+This is a Kodi/XBMC class that exposes the JSON-RPC API and notifications.
+
+The API is defined based on JSON-RPC Introspection on the Kodi/XBMC server that you connect to. For full documentation of the available APIs refer to the [Kodi wiki](http://kodi.wiki/view/JSON-RPC_API/).
 
 ## Installation
 
@@ -29,7 +31,7 @@ kodi.api.VideoLibrary.GetMovies().then( movies => { ... } );
 // or
 let movies = await kodi.api.VideoLibrary.GetMovies();
 
-// or arbitrary commands
+// or arbitrary commands with dot notated identifiers
 kodi.execute('Input.Back');
 ```
 
