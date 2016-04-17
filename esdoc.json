@@ -1,4 +1,4 @@
 {
 	"source": "./src",
-	"destination": "./out/esdoc"
+	"destination": "./doc"
 }

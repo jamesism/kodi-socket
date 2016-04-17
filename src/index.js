@@ -12,7 +12,7 @@ export default class Kodi {
 	 * @param {Object} config - Configuration object
 	 * @param {String} [config.host="localhost"] -  Kodi/XBMC Hos
 	 * @param {String} [config.port="9999"] - Kodi/XBMC TCP Port
-	 * @param {boolean} [connectImmediately=true] - Automatically establish connection or not. If false will wait for manual {@link Kodi#connect} call.
+	 * @param {boolean} [config.connectImmediately=true] - Automatically establish connection or not. If false will wait for manual {@link Kodi#connect} call.
 	 */
 	constructor({
 		host = 'localhost',
