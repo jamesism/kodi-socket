@@ -1,0 +1,11 @@
+{
+	"parserOptions": {
+	  "ecmaVersion": 6,
+	  "sourceType": "module"
+	},
+	"rules": {
+		"arrow-body-style": [2, "as-needed"],
+		"semi": 2,
+		"arrow-spacing": [2, { "before": true, "after": true }]
+	}
+}
