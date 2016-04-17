@@ -1,3 +1,10 @@
+const SOCK_STATE = {
+	CONNECTING: 0,
+	OPEN : 1,
+	CLOSING: 2,
+	CLOSED: 3
+};
+
 /**
  * Kodi/XBMC class exposes JSON-RPC API and notifications
  * @example
@@ -86,8 +93,8 @@ export default class Kodi {
 	 */
 	on(method, fn) {
 		if (!method || !fn) throw new Error("Kodi.on :: Must supply method name and callback");
-		if (!listeners[method]) listeners[method] = [];
-		listeners[method].push(fn);
+		if (!this.listeners[method]) this.listeners[method] = [];
+		this.listeners[method].push(fn);
 		return this;
 	}
 
@@ -101,9 +108,9 @@ export default class Kodi {
 	 */
 	off(method, fn) {
 		if (!method || !fn) throw new Error("Kodi.on :: Must supply method name and callback");
-		if (!listeners[method]) return this;
-		if (listeners[method].indexOf(fn) === -1) return this;
-		listener[method].remove(fn);
+		if (!this.listeners[method]) return this;
+		if (this.listeners[method].indexOf(fn) === -1) return this;
+		this.listener[method].remove(fn);
 		return this;
 	}
 
@@ -160,7 +167,7 @@ export default class Kodi {
 	 * @private
 	 */
 	onOpen(e) {
-		if (listeners.open) listeners.open.forEach(fn => fn(e));
+		if (this.listeners.open) this.listeners.open.forEach(fn => fn(e));
 
 		this.execute('JSONRPC.Introspect').then(res => {
 			if (!res || !res.methods) return $q.reject();
@@ -205,7 +212,7 @@ export default class Kodi {
 	 * @private
 	 */
 	onClose(e) {
-		if (listeners.close) listeners.close.forEach(fn => fn(e));
+		if (this.listeners.close) this.listeners.close.forEach(fn => fn(e));
 
 		this.socket = null;
 	}
@@ -214,7 +221,7 @@ export default class Kodi {
 	 * @private
 	 */
 	onError(e) {
-		if (listeners.error) listeners.error.forEach(fn => fn(e));
+		if (this.listeners.error) this.listeners.error.forEach(fn => fn(e));
 
 		this.lastError = e;
 	}
