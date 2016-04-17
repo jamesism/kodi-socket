@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">src/index.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/jamesism/kodi-socket.git" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/src/index.js~Kodi.html">Kodi</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">src/index.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const SOCK_STATE = {
+	CONNECTING: 0,
+	OPEN : 1,
+	CLOSING: 2,
+	CLOSED: 3
+};
+
+/**
+ * Kodi/XBMC class exposes JSON-RPC API and notifications
+ * @example
+ * let kodi = new Kodi({ host, port, connectImmediately: true })
+ * kodi.api.Player.PlayPause();
+ * kodi.api.VideoLibrary.GetMovies().then(movies =&gt; ... );
+ */
+export default class Kodi {
+	/**
+	 * Constructor takes an configuration object where you specify the
+	 * host and TCP port for your Kodi/XBMC instance.
+	 * @param {Object} config - Configuration object
+	 * @param {String} [config.host=&quot;localhost&quot;] -  Kodi/XBMC Hos
+	 * @param {String} [config.port=&quot;9999&quot;] - Kodi/XBMC TCP Port
+	 * @param {boolean} [config.connectImmediately=true] - Automatically establish connection or not. If false will wait for manual {@link Kodi#connect} call.
+	 */
+	constructor({
+		host = &apos;localhost&apos;,
+		port = &apos;9999&apos;,
+		connectImmediately = true
+	} = {}) {
+		this.host = host;
+		this.port = port;
+		this.url = Kodi.createKodiUrl(host, port);
+
+		this.socket = null;
+		this.messageId = 0;
+
+		this.waiting = {};
+		this.listeners = {};
+		this.api = {};
+
+		if (connectImmediately) this.connect();
+	}
+
+	/*
+	 * Create a Kodi web socket url from host and TCP port
+	 */
+	static createKodiUrl(host, port) {
+		return `ws://${host}:${port}/jsonrpc` || null;
+	}
+
+	/** @type {boolean} **/
+	get connected() {
+		return this.socket &amp;&amp; this.socket.readyState === SOCK_STATE.OPEN;
+	}
+
+	/**
+	 * Set the host and port
+	 * @param {string} [host=&quot;Existing host&quot;] - Kodi/XBMC host
+	 * @param {string} [port=&quot;Existing port&quot;] - Kodi/XBMC port
+	 */
+	setUrl(host = this.host, port = this.port) {
+		this.host = host;
+		this.port = port;
+
+		this.url = Kodi.createKodiUrl(host, port);
+
+		return this;
+	}
+
+	/**
+	 * Establish web socket connection and clear any existing API.
+	 */
+	connect() {
+		if (!this.url) throw new Error(&quot;Kodi.connect :: Cannot connect no url set.&quot;);
+
+		this.api = {};
+
+		this.socket = new WebSocket(this.url);
+		this.socket.onopen = this.onOpen.bind(this);
+		this.socket.onerror = this.onError.bind(this);
+		this.socket.onclose = this.onClose.bind(this);
+		this.socket.onmessage = this.onMessage.bind(this);
+
+		return this;
+	}
+
+	/**
+	 * Subscribe for notifications from Kodi/XBMC connection.
+	 * Can also subscribe to three websocket events &apos;open&apos;, &apos;error&apos;, and &apos;close&apos;.
+	 * @see http://kodi.wiki/view/JSON-RPC_API/v6#Notifications_2
+	 * @param {string} method - Method name
+	 * @param {function} fn - The callback to be called.
+	 * @returns this
+	 */
+	on(method, fn) {
+		if (!method || !fn) throw new Error(&quot;Kodi.on :: Must supply method name and callback&quot;);
+		if (!this.listeners[method]) this.listeners[method] = [];
+		this.listeners[method].push(fn);
+		return this;
+	}
+
+	/**
+	 * Unsubscribe for notifications from Kodi/XBMC connection.
+	 * Also applies for three websocket events &apos;open&apos;, &apos;error&apos;, and &apos;close&apos;.
+	 * @see http://kodi.wiki/view/JSON-RPC_API/v6#Notifications_2
+	 * @param {string} method - Method name
+	 * @param {function} fn - The callback to be removed.
+	 * @returns this
+	 */
+	off(method, fn) {
+		if (!method || !fn) throw new Error(&quot;Kodi.on :: Must supply method name and callback&quot;);
+		if (!this.listeners[method]) return this;
+		if (this.listeners[method].indexOf(fn) === -1) return this;
+		this.listener[method].remove(fn);
+		return this;
+	}
+
+	/**
+	 * Subscribe to a notification from Kodi/XBMC connection one time
+	 * @see http://kodi.wiki/view/JSON-RPC_API/v6#Notifications_2
+	 * @param {string} method - Method name
+	 * @param {function} fn - The callback to be called.
+	 * @returns this
+	 */
+	once(method, fn) {
+		let once = () =&gt; {
+			fn();
+			this.off(method, once);
+			once = null;
+		};
+		return this.on(method, once);
+	}
+
+	/**
+	 * Execute an arbitrary Kodi/XBMC JSON-RPC method over web socket.
+	 * @see http://kodi.wiki/view/JSON-RPC_API/v6#Methods
+	 * @param {string} method - The method to invoke
+	 * @param {Object} params - The params for the command (see individual method documentation)
+	 * @returns {Promise&lt;object, error&gt;} Promise resolving with JSON-RPC `result` value or rejecting with JSON-RPC `error` value.
+	 */
+	execute(method, params) {
+		if (!this.connected) throw new Error(&quot;Kodi.execute :: Cannot execute method when not connected&quot;);
+
+		return new Promise( (resolve, reject) =&gt; {
+			let message = Object.assign({},
+				this.MESSAGE_TPL,
+				{
+					method,
+					params
+				});
+
+			this.socket.send(JSON.stringify(message));
+			this.waiting[message.id] = { resolve, reject };
+		});
+	}
+
+	/**
+	 * @private
+	 */
+	get MESSAGE_TPL() {
+		return {
+			id: ++this.messageId,
+			jsonrpc: &quot;2.0&quot;
+		};
+	}
+
+	/**
+	 * @private
+	 */
+	onOpen(e) {
+		if (this.listeners.open) this.listeners.open.forEach(fn =&gt; fn(e));
+
+		this.execute(&apos;JSONRPC.Introspect&apos;).then(res =&gt; {
+			if (!res || !res.methods) return $q.reject();
+
+			let methods = Object.keys(res.methods);
+
+			methods.forEach( method =&gt; {
+				let [ns, m] = method.split(&apos;.&apos;);
+				if (!this.api[ns]) this.api[ns] = {};
+				this.api[ns][m] = this.execute.bind(this, method);
+			});
+		}, res =&gt; {
+			throw new Error(&apos;Kodi.onOpen :: Error retrieving JSON RPC defintion from Kodi&apos;);
+		});
+	}
+
+	/**
+	 * @private
+	 */
+	onMessage(e) {
+		let response = e &amp;&amp; e.data &amp;&amp; JSON.parse(e.data);
+
+		if (!response) console.warn(&quot;Kodi.onMessage :: Received invalid JSON response.&quot;);
+
+		let { id, result, error, method, params } = response;
+
+		if (result &amp;&amp; this.waiting[id]) {
+			if (error) {
+				this.waiting[id].reject(error);
+			}
+			else {
+				this.waiting[id].resolve(result);
+			}
+			delete this.waiting[id];
+		}
+		else if (method &amp;&amp; this.listeners[method]) {
+			this.listeners[method].forEach( fn =&gt; fn(params));
+		}
+	}
+
+	/**
+	 * @private
+	 */
+	onClose(e) {
+		if (this.listeners.close) this.listeners.close.forEach(fn =&gt; fn(e));
+
+		this.socket = null;
+	}
+
+	/**
+	 * @private
+	 */
+	onError(e) {
+		if (this.listeners.error) this.listeners.error.forEach(fn =&gt; fn(e));
+
+		this.lastError = e;
+	}
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.6)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>
