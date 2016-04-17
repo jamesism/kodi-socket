@@ -194,18 +194,17 @@ export default class Kodi {
 
 		let { id, result, error, method, params } = response;
 
-		if (result && this.waiting[id]) {
-			if (error) {
-				this.waiting[id].reject(error);
-			}
-			else {
-				this.waiting[id].resolve(result);
-			}
+		if (id && this.waiting[id]) {
+			let { reject, resolve } = this.waiting[id];
+			if (error) reject(error);
+			else if (result) resolve(result);
 			delete this.waiting[id];
+			return;
 		}
-		else if (method && this.listeners[method]) {
-			this.listeners[method].forEach( fn => fn(params));
-		}
+
+		let listeners = method && this.listeners[method];
+		if (listeners) listeners.forEach(fn => fn(params));
+		return;
 	}
 
 	/**
