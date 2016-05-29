@@ -1,6 +1,8 @@
 # kodi-socket
 
 [![NPM](https://img.shields.io/npm/v/kodi-socket.svg)](http://npm.im/kodi-socket)
+[![Build Status](https://travis-ci.org/jamesism/kodi-socket.svg?branch=master)](https://travis-ci.org/jamesism/badges)
+
 
 This is a Kodi/XBMC class that exposes the JSON-RPC API and notifications.
 
